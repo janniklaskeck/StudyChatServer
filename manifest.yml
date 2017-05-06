@@ -2,6 +2,7 @@
 applications:
  - name: StudyChatServer
    random-route: true
+   path: build/libs/
    memory: 256M
    instances: 1
    
