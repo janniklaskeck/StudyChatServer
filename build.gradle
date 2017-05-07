@@ -1,15 +1,5 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.2.RELEASE")
-    }
-}
-
 apply plugin: 'java'
 apply plugin: 'eclipse'
-apply plugin: 'org.springframework.boot'
 apply plugin: "war"
 
 jar {
@@ -34,9 +24,11 @@ ext {
 }
 
 dependencies {
+    compile "org.slf4j:slf4j-api:$slf4jVersion"
+    compile "org.apache.logging.log4j:log4j-api:$log4jVersion"
+    compile "org.apache.logging.log4j:log4j-core:$log4jVersion"
+    compile "org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion"
+    compile "org.apache.logging.log4j:log4j-jul:$log4jVersion"
     compile "com.google.code.gson:gson:$gsonVersion"
     compile "org.java-websocket:Java-WebSocket:$webSocketVersion"
-    
-    compile "org.springframework.boot:spring-boot-starter-web"
-    testCompile "org.springframework.boot:spring-boot-starter-test"
 }
