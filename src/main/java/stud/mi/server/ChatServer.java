@@ -1,11 +1,9 @@
 package stud.mi.server;
 
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.util.Collection;
 
 import org.java_websocket.WebSocket;
-import org.java_websocket.drafts.Draft_17;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
@@ -16,7 +14,7 @@ public class ChatServer extends WebSocketServer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatServer.class);
 
     public ChatServer(final int port) {
-        super(new InetSocketAddress(port), Arrays.asList(new Draft_17()));
+        super(new InetSocketAddress(port));
     }
 
     @Override
