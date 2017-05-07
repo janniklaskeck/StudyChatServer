@@ -2,7 +2,7 @@
 applications:
  - name: StudyChatServer
    random-route: true
-   path: build/libs/StudyChatServer-0.1.0.jar
+   path: build/libs/StudyChatServer-all.jar
    memory: 256M
    instances: 1
    
