@@ -14,7 +14,7 @@ public class ServerApp {
     private ServerApp() {
         String port = System.getenv("PORT");
         if (port == null) {
-            port = "80";
+            port = "8080";
         }
         chatServer = new ChatServer(Integer.parseInt(port));
         chatServer.start();
