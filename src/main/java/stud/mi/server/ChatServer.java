@@ -31,11 +31,20 @@ public class ChatServer extends WebSocketServer {
     @Override
     public void onMessage(final WebSocket conn, final String message) {
         LOGGER.debug("Message received from {}, content '{}'", conn.getRemoteSocketAddress().getHostName(), message);
+        sendToOthers(conn, message);
     }
 
     @Override
     public void onError(final WebSocket conn, final Exception ex) {
         LOGGER.error("Error on Connection.", ex);
+    }
+
+    private void sendToOthers(final WebSocket source, final String message) {
+        for (final WebSocket conn : connections()) {
+            if (!conn.equals(source)) {
+                conn.send(message);
+            }
+        }
     }
 
     public static void sendToAll(WebSocketServer wss, String text) {
