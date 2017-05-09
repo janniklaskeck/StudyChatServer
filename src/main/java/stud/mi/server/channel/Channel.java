@@ -42,6 +42,10 @@ public class Channel {
         return false;
     }
 
+    public boolean userExit(final User user) {
+        return userList.remove(user);
+    }
+
     public List<User> getUserList() {
         return userList;
     }
