@@ -13,23 +13,23 @@ import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.Gson;
 
 import stud.mi.server.channel.Channel;
 
 public class ChatServer extends WebSocketServer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatServer.class);
-    private static final JsonParser JSON_PARSER = new JsonParser();
 
-    private static final String USER_TYPE = "USER";
     private static final String CHANNEL_MESSAGE = "CHANNEL_MSG";
     private static final String CHANNEL_JOIN_TYPE = "CHANNEL_JOIN";
     private static final String CHANNEL_EXIT_TYPE = "CHANNEL_EXIT";
 
     private static final Set<User> USER_LIST = new HashSet<>();
     private static final Set<Channel> CHANNEL_LIST = new HashSet<>();
+    private static final String USER_ALREADY_REGISTERED_MSG = "USER {} already registered on Server.";
+
+    private static final Gson GSON = new Gson();
 
     public ChatServer(final int port) {
         super(new InetSocketAddress(port));
@@ -64,48 +64,58 @@ public class ChatServer extends WebSocketServer {
     }
 
     private void parseMessage(final WebSocket conn, final String message) {
-        final JsonObject msg = JSON_PARSER.parse(message).getAsJsonObject();
-        final String type = msg.get("type").getAsString();
-        final String content = msg.get("content").getAsString();
-
-        switch (type) {
-        case USER_TYPE:
-            final User newUser = new User(content, conn);
-            final boolean alreadyAdded = USER_LIST.add(newUser);
-            LOGGER.debug("User {} already added: {}", newUser.getName(), alreadyAdded);
-            break;
+        final Message msg = GSON.fromJson(message, Message.class);
+        switch (msg.getType()) {
         case CHANNEL_EXIT_TYPE:
-            userExitChannel(conn, content);
+            userExitChannel(conn, msg);
             break;
         case CHANNEL_JOIN_TYPE:
-            userJoinChannel(conn, content);
+            userJoinChannel(conn, msg);
             break;
         case CHANNEL_MESSAGE:
-            sendMessageToChannel(conn, content);
+            sendMessageToChannel(conn, msg);
             break;
         default:
-            LOGGER.debug("Message Type unknown: {}", type);
+            LOGGER.debug("Message Type unknown: {}", msg.getType());
         }
     }
 
-    private void sendMessageToChannel(final WebSocket userConnection, final String channelName) {
-
+    private void sendMessageToChannel(final WebSocket userConnection, final Message message) {
+        final Channel channel = getChannel(message.getChannelName());
+        if (channel != null) {
+            final User user = getUser(userConnection);
+            channel.sendMessageToChannel(user, message);
+        } else {
+            LOGGER.debug("Channel {} does not exist!", message.getChannelName());
+        }
     }
 
-    private void userExitChannel(final WebSocket userConnection, final String channelName) {
-        final Channel channel = getChannel(channelName);
+    private void userExitChannel(final WebSocket userConnection, final Message message) {
+        final Channel channel = getChannel(message.getChannelName());
         if (channel != null) {
             final User user = getUser(userConnection);
             channel.userExit(user);
         }
     }
 
-    private void userJoinChannel(final WebSocket userConnection, final String channelName) {
-        final Channel channel = getChannel(channelName);
-        if (channel != null) {
-            final User user = getUser(userConnection);
-            channel.userJoin(user);
+    private void userJoinChannel(final WebSocket userConnection, final Message message) {
+        Channel channel = getChannel(message.getChannelName());
+        final User newUser = new User(message.getUserName(), userConnection);
+        if (!USER_LIST.add(newUser)) {
+            LOGGER.debug("User {} already added", newUser.getName());
+            userConnection.close(1, String.format(USER_ALREADY_REGISTERED_MSG, message.getUserName()));
         }
+        if (channel == null) {
+            channel = addChannel(message.getChannelName());
+        }
+        final User user = getUser(userConnection);
+        channel.userJoin(user);
+    }
+
+    private Channel addChannel(final String channelName) {
+        final Channel newChannel = new Channel(channelName);
+        CHANNEL_LIST.add(newChannel);
+        return newChannel;
     }
 
     private User getUser(final WebSocket connection) {
@@ -133,14 +143,6 @@ public class ChatServer extends WebSocketServer {
             return optionalChannel.get();
         }
         return null;
-    }
-
-    private void sendToOthers(final WebSocket source, final String message) {
-        for (final WebSocket conn : connections()) {
-            if (!conn.equals(source)) {
-                conn.send(message);
-            }
-        }
     }
 
     public static void sendToAll(WebSocketServer wss, String text) {

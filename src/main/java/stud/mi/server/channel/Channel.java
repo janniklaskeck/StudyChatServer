@@ -6,7 +6,9 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import stud.mi.server.Message;
 import stud.mi.server.User;
+import stud.mi.util.MessageComparator;
 
 public class Channel {
 
@@ -14,7 +16,10 @@ public class Channel {
     private static final int MAX_USERS = 1024;
     private static final int DEFAULT_MAX_USERS = 64;
 
+    private static final MessageComparator MESSAGE_COMPARATOR = new MessageComparator();
+
     private final List<User> userList = new ArrayList<>();
+    private final List<Message> messageList = new ArrayList<>();
     private String name;
     private int maxUsers;
 
@@ -32,6 +37,17 @@ public class Channel {
 
     public Channel(final String name) {
         this(name, 64);
+    }
+
+    public void sendMessageToChannel(final User user, final Message message) {
+        if (!userList.contains(user)) {
+            LOGGER.debug("User {} not member of Channel {} tried to send Message {}", user.getName(), this.name,
+                    message.getContent());
+            return;
+        }
+        messageList.add(message);
+        messageList.sort(MESSAGE_COMPARATOR);
+        LOGGER.debug("Message sent to channel {}, Content: {}", this.name, message);
     }
 
     public boolean userJoin(final User user) {
