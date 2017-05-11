@@ -80,10 +80,25 @@
 	success: SUCCESS				boolean
 }
 ```
-##### Channel Exit Message Answer Content:
+##### Channel Send Message To Other Users Content:
 ```json
+{
+	message: MESSAGE,				String
+	userName: USER_NAME_SENDER	boolean
+}
+```
+##### Channel Exit Message Answer Content:
+``` json
 {
 	channelName: CHANNEL_NAME,	String
 	success: SUCCESS				boolean
+}
+```
+##### Send Channel List Content:
+``` json
+{
+	channels: [						JsonArray
+		CHANNELS						Strings
+	]
 }
 ```
