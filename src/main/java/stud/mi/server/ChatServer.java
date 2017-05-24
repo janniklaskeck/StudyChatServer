@@ -18,12 +18,13 @@ import org.slf4j.LoggerFactory;
 import stud.mi.message.Message;
 import stud.mi.message.MessageType;
 import stud.mi.server.channel.Channel;
+import stud.mi.server.user.RemoteUser;
 import stud.mi.util.MessageBuilder;
 
 public class ChatServer extends WebSocketServer {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ChatServer.class);
 
-	private static final Map<Long, User> USER_LIST = new HashMap<>();
+	private static final Map<Long, RemoteUser> USER_LIST = new HashMap<>();
 	private static final Set<Channel> CHANNEL_LIST = new HashSet<>();
 	public static final int PROTOCOL_VERSION = 1;
 
@@ -40,7 +41,7 @@ public class ChatServer extends WebSocketServer {
 	public void onClose(final WebSocket conn, final int code, final String reason, final boolean remote) {
 		LOGGER.debug("Connection to {} closed with code {} and Reason {}. Origin: {}",
 				conn.getRemoteSocketAddress().getHostName(), code, reason, remote);
-		final User user = getUser(conn);
+		final RemoteUser user = getUser(conn);
 		user.exitChannel();
 		USER_LIST.remove(user.getID());
 	}
@@ -70,7 +71,7 @@ public class ChatServer extends WebSocketServer {
 			break;
 		case MessageType.CHANNEL_JOIN:
 			final Channel channel = addChannel(msg.getChannelName());
-			final User user = getUser(msg.getUserID());
+			final RemoteUser user = getUser(msg.getUserID());
 			user.joinChannel(channel);
 			break;
 		default:
@@ -78,8 +79,8 @@ public class ChatServer extends WebSocketServer {
 		}
 	}
 
-	private User getUser(final Long userID) {
-		final User user = USER_LIST.entrySet().stream().filter(entry -> entry.getValue().getID().equals(userID))
+	private RemoteUser getUser(final Long userID) {
+		final RemoteUser user = USER_LIST.entrySet().stream().filter(entry -> entry.getValue().getID().equals(userID))
 				.collect(Collectors.toList()).get(0).getValue();
 		LOGGER.trace("Return the User {} for ID {}", user, userID);
 		return user;
@@ -91,7 +92,7 @@ public class ChatServer extends WebSocketServer {
 	}
 
 	private void registerUser(final WebSocket connection, final Message msg) {
-		final boolean userAlreadyExists = USER_LIST.entrySet().stream()
+		final boolean userAlreadyExists = !USER_LIST.entrySet().stream()
 				.filter(entry -> entry.getValue().getName().equalsIgnoreCase(msg.getUserName()))
 				.collect(Collectors.toList()).isEmpty();
 		if (userAlreadyExists) {
@@ -101,8 +102,10 @@ public class ChatServer extends WebSocketServer {
 			return;
 		}
 		final Long newUserID = generateUserID();
-		final User user = new User(connection, msg.getUserName(), 0L);
+		final RemoteUser user = new RemoteUser(connection, msg.getUserName(), newUserID);
 		USER_LIST.put(newUserID, user);
+		final Message reply = MessageBuilder.buildUserJoinAnswer(newUserID);
+		connection.send(reply.toJson());
 		LOGGER.debug("Registered new User with Name {} and ID {}", user.getName(), user.getID());
 	}
 
@@ -131,7 +134,7 @@ public class ChatServer extends WebSocketServer {
 				.collect(Collectors.toList()).get(0);
 	}
 
-	private static User getUser(final WebSocket connection) {
+	private static RemoteUser getUser(final WebSocket connection) {
 		return USER_LIST.entrySet().stream().filter(entry -> entry.getValue().getConnection().equals(connection))
 				.collect(Collectors.toList()).get(0).getValue();
 	}

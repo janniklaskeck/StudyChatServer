@@ -30,6 +30,7 @@ ext {
     log4jVersion = "2.7"
     gsonVersion = "2.8.0"
     webSocketVersion = "1.3.0"
+    statefuljVersion = "3.0"
 }
 
 dependencies {
@@ -40,4 +41,5 @@ dependencies {
     compile "org.apache.logging.log4j:log4j-jul:$log4jVersion"
     compile "com.google.code.gson:gson:$gsonVersion"
     compile "org.java-websocket:Java-WebSocket:$webSocketVersion"
+    compile "org.statefulj:statefulj-fsm:$statefuljVersion"
 }

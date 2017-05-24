@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import stud.mi.message.Message;
 import stud.mi.server.ChatServer;
-import stud.mi.server.User;
+import stud.mi.server.user.RemoteUser;
 import stud.mi.util.MessageBuilder;
 
 public class Channel {
@@ -17,7 +17,7 @@ public class Channel {
 	private static final int MAX_USERS = 512;
 	private static final int DEFAULT_MAX_USERS = 64;
 
-	private final List<User> userList = new ArrayList<>();
+	private final List<RemoteUser> userList = new ArrayList<>();
 	private String name;
 	private int maxUsers;
 
@@ -37,7 +37,7 @@ public class Channel {
 		this(name, 64);
 	}
 
-	public void sendMessageToChannel(final User user, final Message message) {
+	public void sendMessageToChannel(final RemoteUser user, final Message message) {
 		if (!userList.contains(user)) {
 			LOGGER.debug("User {} not member of Channel {} tried to send Message {}", user.getName(), this.name,
 					message.getMessage());
@@ -47,8 +47,8 @@ public class Channel {
 		LOGGER.debug("Message sent to channel {}, Content: {}", this.name, message);
 	}
 
-	private void sendMessageToOthers(final User sender, final String message) {
-		for (final User user : userList) {
+	private void sendMessageToOthers(final RemoteUser sender, final String message) {
+		for (final RemoteUser user : userList) {
 			if (!user.getID().equals(sender.getID())) {
 				final Message msg = MessageBuilder.buildMessagePropagateAnswer(message, sender.getName());
 				user.getConnection().send(msg.toJson());
@@ -56,7 +56,7 @@ public class Channel {
 		}
 	}
 
-	public boolean userJoin(final User user) {
+	public boolean userJoin(final RemoteUser user) {
 		if (userList.size() < this.maxUsers) {
 			userList.add(user);
 			return true;
@@ -64,7 +64,7 @@ public class Channel {
 		return false;
 	}
 
-	public boolean userExit(final User user) {
+	public boolean userExit(final RemoteUser user) {
 		final boolean success = userList.remove(user);
 		if (userList.isEmpty()) {
 			ChatServer.removeChannel(this);
@@ -72,7 +72,7 @@ public class Channel {
 		return success;
 	}
 
-	public List<User> getUserList() {
+	public List<RemoteUser> getUserList() {
 		return userList;
 	}
 
