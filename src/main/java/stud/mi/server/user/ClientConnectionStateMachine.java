@@ -3,61 +3,94 @@ package stud.mi.server.user;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.statefulj.fsm.FSM;
+import org.statefulj.fsm.TooBusyException;
 import org.statefulj.fsm.model.State;
 import org.statefulj.fsm.model.impl.StateImpl;
 import org.statefulj.persistence.memory.MemoryPersisterImpl;
 
-enum UserEvents {
-	JOIN("JOIN"), LEAVE("LEAVE"), SEND_TO("SEND_TO"), SEND_FROM("SEND_FROM"), JOIN_CHANNEL("JOIN_CHANNEL");
+import stud.mi.server.ChatServer;
+import stud.mi.server.channel.Channel;
+import stud.mi.util.ChatAction;
+import stud.mi.util.MessageBuilder;
 
-	private String value;
+public class ClientConnectionStateMachine extends FSM<RemoteUser> {
 
-	private UserEvents(final String value) {
-		this.value = value;
-	}
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClientConnectionStateMachine.class);
 
-	public String getValue() {
-		return this.value;
-	}
-}
+    private RemoteUser remoteUser;
+    private List<State<RemoteUser>> states = new ArrayList<>();
 
-enum UserStates {
-	CONNECTED_SERVER("CONNECTED_SERVER"), LEFT_SERVER("LEFT_SERVER"), CONNECTED_CHANNEL("CONNECTED_CHANNEL");
+    public ClientConnectionStateMachine(final RemoteUser user) {
+        super("ClientConnectionFSM");
+        this.remoteUser = user;
 
-	private String value;
+        createStateMachine();
+    }
 
-	private UserStates(final String value) {
-		this.value = value;
-	}
+    private void createStateMachine() {
+        final StateImpl<RemoteUser> connectingState = new StateImpl<>(UserStates.CONNECTING.getValue());
+        final StateImpl<RemoteUser> connectedState = new StateImpl<>(UserStates.CONNECTED.getValue());
+        final StateImpl<RemoteUser> connectedChannelState = new StateImpl<>(UserStates.CONNECTED_CHANNEL.getValue());
+        final StateImpl<RemoteUser> disconnectedState = new StateImpl<>(UserStates.DISCONNECTED.getValue(), true);
 
-	public String getValue() {
-		return this.value;
-	}
-}
+        final ChatAction onRegister = new ChatAction(this.remoteUser, (user, state, event, args) -> {
+            user.getConnection().send(MessageBuilder.buildSendUserID(user.getID()).toJson());
+            if (user.getID() > 0) {
+                ChatServer.getUsers().put(user.getID(), user);
+            }
+        });
 
-public class ClientConnectionStateMachine {
+        final ChatAction onJoinChannel = new ChatAction(this.remoteUser, (user, state, event, args) -> {
+            final Channel channelToJoin = (Channel) args[0];
+            user.exitChannel();
+            user.joinChannel(channelToJoin);
+            user.getConnection().send(MessageBuilder.buildAckUserJoinChannel(user.getID(), channelToJoin).toJson());
+        });
+        final ChatAction onDisconnectServer = new ChatAction(this.remoteUser, (user, state, event, args) -> {
+            user.exitChannel();
+            ChatServer.getUsers().remove(user.getID());
+        });
 
-	private FSM<Object> stateMachine;
-	private RemoteUser user;
-	private List<State<RemoteUserState>> states = new ArrayList<>();
+        final ChatAction onDisconnectChannel = new ChatAction(this.remoteUser, (user, state, event, args) -> {
+            user.exitChannel();
+        });
 
-	public ClientConnectionStateMachine(final RemoteUser user) {
-		this.user = user;
-		createStates();
-		createStateMachine();
-	}
+        connectingState.addTransition(UserEvents.ACK_REGISTER.getValue(), connectedState, onRegister);
+        connectedState.addTransition(UserEvents.JOIN_CHANNEL.getValue(), connectedChannelState, onJoinChannel);
+        connectedState.addTransition(UserEvents.DISCONNECT_SERVER.getValue(), disconnectedState, onDisconnectServer);
+        connectedChannelState.addTransition(UserEvents.DISCONNECT_CHANNEL.getValue(), connectedState,
+                onDisconnectChannel);
+        connectedChannelState.addTransition(UserEvents.DISCONNECT_SERVER.getValue(), disconnectedState,
+                onDisconnectServer);
 
-	private void createStates() {
-		states.add(new StateImpl<>(""));
-	}
+        states.add(connectingState);
+        states.add(connectedState);
+        states.add(connectedChannelState);
+        states.add(disconnectedState);
+        final MemoryPersisterImpl<RemoteUser> persister = new MemoryPersisterImpl<>(states, connectingState);
+        this.setPersister(persister);
 
-	private void createStateMachine() {
-		stateMachine = new FSM<>(new MemoryPersisterImpl<>());
-	}
+    }
 
-	public void update() {
+    public State<RemoteUser> processEvent(final UserEvents event) {
+        try {
+            return super.onEvent(this.remoteUser, event.getValue(), (Object[]) null);
+        } catch (TooBusyException e) {
+            LOGGER.debug("StateMachine too busy.", e);
+        }
+        return null;
+    }
 
-	}
+    public State<RemoteUser> processEvent(final UserEvents event, final Object... args) {
+        try {
+            return super.onEvent(this.remoteUser, event.getValue(), args);
+        } catch (TooBusyException e) {
+            LOGGER.debug("StateMachine too busy.", e);
+        }
+        return null;
+    }
 
 }
