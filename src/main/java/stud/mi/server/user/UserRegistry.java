@@ -69,10 +69,10 @@ public class UserRegistry {
     private Long generateUserID() {
         final Random rnd = new Random();
         long userID = rnd.nextLong();
-        while (USERS.containsKey(userID) || userID == 0L) {
+        while (USERS.containsKey(userID) || userID <= 0L) {
             userID = rnd.nextLong();
         }
-        LOGGER.trace("Return new User ID {}.", userID);
+        LOGGER.debug("Return new User ID {}.", userID);
         return userID;
     }
 

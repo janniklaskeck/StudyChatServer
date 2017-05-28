@@ -20,6 +20,7 @@ public class RemoteUser {
         this.name = name;
         this.userID = designatedID;
         this.connection = connection;
+        this.stateMachine = new ClientConnectionStateMachine(this);
     }
 
     public ClientConnectionStateMachine getStateMachine() {
@@ -39,6 +40,7 @@ public class RemoteUser {
     }
 
     public boolean joinChannel(final Channel channel) {
+        this.exitChannel();
         if (channel.userJoin(this)) {
             this.jointChannel = channel;
             return true;
@@ -58,7 +60,7 @@ public class RemoteUser {
     }
 
     public void destroy() {
-        // TODO Auto-generated method stub
+        this.exitChannel();
 
     }
 

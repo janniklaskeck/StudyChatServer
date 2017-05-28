@@ -5,14 +5,14 @@ import org.slf4j.LoggerFactory;
 
 import stud.mi.server.ChatServer;
 
-public class ServerApp {
+public class ChatServerApp {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ServerApp.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ChatServerApp.class);
 	private static final String DEFAULT_PORT = "5000";
 
 	private ChatServer chatServer;
 
-	private ServerApp() {
+	private ChatServerApp() {
 		String port = System.getenv("PORT");
 		if (port == null) {
 			port = DEFAULT_PORT;
@@ -23,6 +23,6 @@ public class ServerApp {
 	}
 
 	public static void main(String[] args) {
-		new ServerApp();
+		new ChatServerApp();
 	}
 }

@@ -36,22 +36,20 @@ public class Channel {
         this(name, 64);
     }
 
-    public void sendMessageToChannel(final RemoteUser user, final Message message) {
+    public void sendMessageToChannel(final RemoteUser user, final String message) {
         if (!userList.contains(user)) {
             LOGGER.debug("User {} not member of Channel {} tried to send Message {}", user.getName(), this.name,
-                    message.getMessage());
+                    message);
             return;
         }
-        sendMessageToOthers(user, message.getMessage());
+        sendMessage(user, message);
         LOGGER.debug("Message sent to channel {}, Content: {}", this.name, message);
     }
 
-    private void sendMessageToOthers(final RemoteUser sender, final String message) {
+    private void sendMessage(final RemoteUser sender, final String message) {
         for (final RemoteUser user : userList) {
-            if (!user.getID().equals(sender.getID())) {
-                final Message msg = MessageBuilder.buildMessagePropagateAnswer(message, sender.getName());
-                user.getConnection().send(msg.toJson());
-            }
+            final Message msg = MessageBuilder.buildMessagePropagateAnswer(message, sender.getName());
+            user.getConnection().send(msg.toJson());
         }
     }
 

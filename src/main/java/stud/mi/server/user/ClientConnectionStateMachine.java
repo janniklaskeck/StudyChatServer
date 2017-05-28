@@ -35,14 +35,18 @@ public class ClientConnectionStateMachine extends FSM<RemoteUser> {
         final StateImpl<RemoteUser> connectedChannelState = new StateImpl<>(UserStates.CONNECTED_CHANNEL.getValue());
         final StateImpl<RemoteUser> disconnectedState = new StateImpl<>(UserStates.DISCONNECTED.getValue(), true);
 
-        final ChatAction onRegister = new ChatAction(this.remoteUser, (user, state, event, args) -> user.getConnection()
-                .send(MessageBuilder.buildSendUserID(user.getID()).toJson()));
+        final ChatAction onRegister = new ChatAction(this.remoteUser, (user, state, event, args) -> {
+            final String message = MessageBuilder.buildSendUserID(user.getID()).toJson();
+            LOGGER.debug("Send Message: {}", message);
+            user.getConnection().send(message);
+        });
 
         final ChatAction onJoinChannel = new ChatAction(this.remoteUser, (user, state, event, args) -> {
             final Channel channelToJoin = (Channel) args[0];
-            user.exitChannel();
             user.joinChannel(channelToJoin);
-            user.getConnection().send(MessageBuilder.buildAckUserJoinChannel(user.getID(), channelToJoin).toJson());
+            final String message = MessageBuilder.buildAckUserJoinChannel(user.getID(), channelToJoin).toJson();
+            LOGGER.debug("Send Message: {}", message);
+            user.getConnection().send(message);
         });
         final ChatAction onDisconnectServer = new ChatAction(this.remoteUser, (user, state, event, args) -> {
             user.exitChannel();

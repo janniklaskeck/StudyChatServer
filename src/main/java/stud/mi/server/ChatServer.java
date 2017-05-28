@@ -11,6 +11,10 @@ import org.slf4j.LoggerFactory;
 
 import stud.mi.message.Message;
 import stud.mi.message.MessageType;
+import stud.mi.server.channel.Channel;
+import stud.mi.server.channel.ChannelRegistry;
+import stud.mi.server.user.RemoteUser;
+import stud.mi.server.user.UserEvents;
 import stud.mi.server.user.UserRegistry;
 
 public class ChatServer extends WebSocketServer {
@@ -57,7 +61,13 @@ public class ChatServer extends WebSocketServer {
             UserRegistry.getInstance().registerUser(conn, msg);
             break;
         case MessageType.CHANNEL_JOIN:
-
+            final Channel channel = ChannelRegistry.getInstance().getChannel(msg.getChannelName());
+            UserRegistry.getInstance().getUser(msg.getUserID()).getStateMachine().processEvent(UserEvents.JOIN_CHANNEL,
+                    channel);
+            break;
+        case MessageType.CHANNEL_MESSAGE:
+            final RemoteUser user = UserRegistry.getInstance().getUser(msg.getUserID());
+            user.getJointChannel().sendMessageToChannel(user, msg.getMessage());
             break;
         default:
             LOGGER.debug("Message Type unknown: {}", msg.getType());
