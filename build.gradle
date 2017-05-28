@@ -1,15 +1,32 @@
 buildscript {
     repositories {
-        jcenter()
+		jcenter()
     }
     dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
+        classpath("com.github.jengelman.gradle.plugins:shadow:2.0.0")
+		classpath("com.github.pivotalservices:ya-cf-app-gradle-plugin:1.0.9")
     }
 }
 
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'java'
 apply plugin: 'eclipse'
+apply plugin: 'cf-app'
+
+cfConfig {
+	//CF Details
+	ccHost = "api.ng.bluemix.net"
+	ccUser = cfUser
+	ccPassword = cfPass
+	org = "HdM-CloudDev-jk165"
+	space = "dev"
+
+	//App Details
+	name = rootProject.name
+	filePath = "build/libs/StudyChatServer-all.jar"
+	instances = 1
+	memory = 256
+}
 
 jar {
     baseName = 'StudyChatServer'
