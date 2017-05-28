@@ -57,4 +57,9 @@ public class RemoteUser {
         return jointChannel;
     }
 
+    public void destroy() {
+        // TODO Auto-generated method stub
+
+    }
+
 }

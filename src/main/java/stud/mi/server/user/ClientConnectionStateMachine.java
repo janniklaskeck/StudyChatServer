@@ -11,7 +11,6 @@ import org.statefulj.fsm.model.State;
 import org.statefulj.fsm.model.impl.StateImpl;
 import org.statefulj.persistence.memory.MemoryPersisterImpl;
 
-import stud.mi.server.ChatServer;
 import stud.mi.server.channel.Channel;
 import stud.mi.util.ChatAction;
 import stud.mi.util.MessageBuilder;
@@ -36,12 +35,8 @@ public class ClientConnectionStateMachine extends FSM<RemoteUser> {
         final StateImpl<RemoteUser> connectedChannelState = new StateImpl<>(UserStates.CONNECTED_CHANNEL.getValue());
         final StateImpl<RemoteUser> disconnectedState = new StateImpl<>(UserStates.DISCONNECTED.getValue(), true);
 
-        final ChatAction onRegister = new ChatAction(this.remoteUser, (user, state, event, args) -> {
-            user.getConnection().send(MessageBuilder.buildSendUserID(user.getID()).toJson());
-            if (user.getID() > 0) {
-                ChatServer.getUsers().put(user.getID(), user);
-            }
-        });
+        final ChatAction onRegister = new ChatAction(this.remoteUser, (user, state, event, args) -> user.getConnection()
+                .send(MessageBuilder.buildSendUserID(user.getID()).toJson()));
 
         final ChatAction onJoinChannel = new ChatAction(this.remoteUser, (user, state, event, args) -> {
             final Channel channelToJoin = (Channel) args[0];
@@ -51,12 +46,11 @@ public class ClientConnectionStateMachine extends FSM<RemoteUser> {
         });
         final ChatAction onDisconnectServer = new ChatAction(this.remoteUser, (user, state, event, args) -> {
             user.exitChannel();
-            ChatServer.getUsers().remove(user.getID());
+            UserRegistry.getInstance().removeUser(user.getID());
         });
 
-        final ChatAction onDisconnectChannel = new ChatAction(this.remoteUser, (user, state, event, args) -> {
-            user.exitChannel();
-        });
+        final ChatAction onDisconnectChannel = new ChatAction(this.remoteUser,
+                (user, state, event, args) -> user.exitChannel());
 
         connectingState.addTransition(UserEvents.ACK_REGISTER.getValue(), connectedState, onRegister);
         connectedState.addTransition(UserEvents.JOIN_CHANNEL.getValue(), connectedChannelState, onJoinChannel);
