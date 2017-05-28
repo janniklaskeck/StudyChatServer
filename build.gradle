@@ -17,7 +17,7 @@ jar {
     manifest {
         attributes 'Implementation-Title': "StudyChatServer",
                    'Implementation-Version': version,
-                   'Main-Class': 'stud.mi.ServerApp'
+                   'Main-Class': 'stud.mi.ChatServerApp'
     }
 }
 
