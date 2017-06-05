@@ -8,6 +8,7 @@ public class MessageType {
     public static final String CHANNEL_JOIN = "CHANNEL_JOIN";
     public static final String ACK_CHANNEL_JOIN = "ACK_CHANNEL_JOIN";
     public static final String CHANNEL_EXIT = "CHANNEL_EXIT";
+    public static final String CHANNEL_USER_JOIN = "CHANNEL_USER_JOIN";
 
     private MessageType() {
     }

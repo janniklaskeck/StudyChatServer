@@ -1,11 +1,15 @@
 package stud.mi.util;
 
+import java.util.List;
+
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import stud.mi.message.Message;
 import stud.mi.message.MessageType;
 import stud.mi.server.ChatServer;
 import stud.mi.server.channel.Channel;
+import stud.mi.server.user.RemoteUser;
 
 public class MessageBuilder {
 
@@ -17,8 +21,21 @@ public class MessageBuilder {
     private static final String CONTENT = "content";
     private static final String MESSAGE = "message";
     private static final String USER_NAME = "userName";
+    private static final String CHANNEL_USER_NAMES = "channelUserNames";
 
     private MessageBuilder() {
+    }
+
+    public static Message buildUserJoinMessage(final List<RemoteUser> users, final Channel channel) {
+        final JsonObject msgBase = buildMessageBaseJson(MessageType.CHANNEL_USER_JOIN);
+        final Message msg = new Message(msgBase);
+        final JsonArray userNameArray = new JsonArray();
+        for (final RemoteUser user : users) {
+            userNameArray.add(user.getName());
+        }
+        msg.getContent().add(CHANNEL_USER_NAMES, userNameArray);
+        msg.getContent().addProperty(CHANNEL_NAME, channel.getName());
+        return msg;
     }
 
     public static Message buildAckUserJoinChannel(final Long userID, final Channel channel) {
@@ -68,7 +85,7 @@ public class MessageBuilder {
         return msg;
     }
 
-    private static JsonObject buildMessageBaseJson(final String type) {
+    public static JsonObject buildMessageBaseJson(final String type) {
         final JsonObject jo = new JsonObject();
         jo.addProperty(VERSION, ChatServer.PROTOCOL_VERSION);
         jo.addProperty(TYPE, type);

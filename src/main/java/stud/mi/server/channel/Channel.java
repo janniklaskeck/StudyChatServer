@@ -6,7 +6,10 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.JsonObject;
+
 import stud.mi.message.Message;
+import stud.mi.message.MessageType;
 import stud.mi.server.user.RemoteUser;
 import stud.mi.util.MessageBuilder;
 
@@ -36,26 +39,44 @@ public class Channel {
         this(name, 64);
     }
 
-    public void sendMessageToChannel(final RemoteUser user, final String message) {
-        if (!userList.contains(user)) {
-            LOGGER.debug("User {} not member of Channel {} tried to send Message {}", user.getName(), this.name,
+    public void sendMessageToChannel(final RemoteUser sender, final String type) {
+        LOGGER.debug("Sending message to channel {} with type {}", this.getName(), type);
+        final JsonObject jo = MessageBuilder.buildMessageBaseJson(type);
+        final Message customMessage = new Message(jo);
+        this.sendMessageToChannel(sender, customMessage);
+    }
+
+    public void sendMessageToChannel(final RemoteUser sender, final Message message) {
+        LOGGER.debug("Sending message to channel {} with type {}", this.getName(), message.getType());
+        if (!userList.contains(sender)) {
+            LOGGER.debug("User {} not member of Channel {} tried to send Message {}", sender.getName(), this.name,
                     message);
             return;
         }
-        sendMessage(user, message);
-        LOGGER.debug("Message sent to channel {}, Content: {}", this.name, message);
-    }
-
-    private void sendMessage(final RemoteUser sender, final String message) {
+        Message msg = null;
+        switch (message.getType()) {
+        case MessageType.CHANNEL_USER_JOIN:
+            msg = MessageBuilder.buildUserJoinMessage(userList, this);
+            break;
+        case MessageType.CHANNEL_MESSAGE:
+            msg = MessageBuilder.buildMessagePropagateAnswer(message.getMessage(), sender.getName());
+            break;
+        default:
+            msg = new Message("{}");
+            LOGGER.error("Tried to send message to channel with unknown type: {}", msg.getType());
+            break;
+        }
         for (final RemoteUser user : userList) {
-            final Message msg = MessageBuilder.buildMessagePropagateAnswer(message, sender.getName());
             user.getConnection().send(msg.toJson());
         }
+        LOGGER.debug("Message sent to channel {} with {} users, Content: {}", this.name, this.userList.size(),
+                message.toJson());
     }
 
     public boolean userJoin(final RemoteUser user) {
         if (userList.size() < this.maxUsers) {
             userList.add(user);
+            sendMessageToChannel(user, MessageType.CHANNEL_USER_JOIN);
             return true;
         }
         return false;

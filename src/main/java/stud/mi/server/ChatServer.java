@@ -67,7 +67,7 @@ public class ChatServer extends WebSocketServer {
             break;
         case MessageType.CHANNEL_MESSAGE:
             final RemoteUser user = UserRegistry.getInstance().getUser(msg.getUserID());
-            user.getJointChannel().sendMessageToChannel(user, msg.getMessage());
+            user.getJointChannel().sendMessageToChannel(user, msg);
             break;
         default:
             LOGGER.debug("Message Type unknown: {}", msg.getType());
