@@ -48,15 +48,10 @@ public class Channel {
 
     public void sendMessageToChannel(final RemoteUser sender, final Message message) {
         LOGGER.debug("Sending message to channel {} with type {}", this.getName(), message.getType());
-        if (!userList.contains(sender)) {
-            LOGGER.debug("User {} not member of Channel {} tried to send Message {}", sender.getName(), this.name,
-                    message);
-            return;
-        }
         Message msg = null;
         switch (message.getType()) {
-        case MessageType.CHANNEL_USER_JOIN:
-            msg = MessageBuilder.buildUserJoinMessage(userList, this);
+        case MessageType.CHANNEL_USER_CHANGE:
+            msg = MessageBuilder.buildUserChangeMessage(userList, this);
             break;
         case MessageType.CHANNEL_MESSAGE:
             msg = MessageBuilder.buildMessagePropagateAnswer(message.getMessage(), sender.getName());
@@ -76,7 +71,7 @@ public class Channel {
     public boolean userJoin(final RemoteUser user) {
         if (userList.size() < this.maxUsers) {
             userList.add(user);
-            sendMessageToChannel(user, MessageType.CHANNEL_USER_JOIN);
+            sendMessageToChannel(user, MessageType.CHANNEL_USER_CHANGE);
             return true;
         }
         return false;
@@ -86,6 +81,8 @@ public class Channel {
         final boolean success = userList.remove(user);
         if (userList.isEmpty()) {
             ChannelRegistry.getInstance().removeChannel(this);
+        } else {
+            sendMessageToChannel(user, MessageType.CHANNEL_USER_CHANGE);
         }
         return success;
     }

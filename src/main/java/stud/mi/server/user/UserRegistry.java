@@ -1,8 +1,12 @@
 package stud.mi.server.user;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.stream.Collectors;
 
 import org.java_websocket.WebSocket;
@@ -16,10 +20,28 @@ public class UserRegistry {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserRegistry.class);
 
     private static final Map<Long, RemoteUser> USERS = new HashMap<>();
+    private static final long HEARTBEAT_RATE = 15 * 1000L;
 
     private static UserRegistry instance;
 
+    private Timer heartBeatTimer;
+
     private UserRegistry() {
+        this.heartBeatTimer = new Timer(true);
+        heartBeatTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                LOGGER.trace("Running Heartbeat.");
+                final List<Long> deadUserIds = new ArrayList<>();
+                for (Map.Entry<Long, RemoteUser> user : USERS.entrySet()) {
+                    if (user.getValue().isDead()) {
+                        LOGGER.debug("User {} is dead", user.getValue().getName());
+                        deadUserIds.add(user.getKey());
+                    }
+                }
+                deadUserIds.forEach(instance::removeUser);
+            }
+        }, 1000L, HEARTBEAT_RATE);
     }
 
     public static synchronized UserRegistry getInstance() {
@@ -34,6 +56,7 @@ public class UserRegistry {
     }
 
     public void removeUser(final Long userID) {
+        LOGGER.debug("Removing User with ID {}", userID);
         USERS.get(userID).destroy();
         USERS.remove(userID);
     }
@@ -48,6 +71,7 @@ public class UserRegistry {
     }
 
     public void registerUser(final WebSocket connection, final Message registerMessage) {
+        LOGGER.debug("Regiser User {}", registerMessage.getUserName());
         final boolean userAlreadyExists = !USERS.entrySet().stream()
                 .filter(entry -> entry.getValue().getName().equalsIgnoreCase(registerMessage.getUserName()))
                 .collect(Collectors.toList()).isEmpty();

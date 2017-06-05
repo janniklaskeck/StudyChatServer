@@ -26,8 +26,8 @@ public class MessageBuilder {
     private MessageBuilder() {
     }
 
-    public static Message buildUserJoinMessage(final List<RemoteUser> users, final Channel channel) {
-        final JsonObject msgBase = buildMessageBaseJson(MessageType.CHANNEL_USER_JOIN);
+    public static Message buildUserChangeMessage(final List<RemoteUser> users, final Channel channel) {
+        final JsonObject msgBase = buildMessageBaseJson(MessageType.CHANNEL_USER_CHANGE);
         final Message msg = new Message(msgBase);
         final JsonArray userNameArray = new JsonArray();
         for (final RemoteUser user : users) {
