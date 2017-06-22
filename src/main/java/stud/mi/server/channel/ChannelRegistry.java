@@ -56,10 +56,10 @@ public class ChannelRegistry {
 
 	public void sendChannelsToUser(final RemoteUser user) {
 		if (user != null && user.isValid()) {
-
+			final Message channelsMessage = MessageBuilder.buildChannelChangeMessage(new ArrayList<>(CHANNELS));
+			user.getConnection().send(channelsMessage.toJson());
+			LOGGER.debug("Send channelList to User: {}", user.getName());
 		}
-		final Message channelsMessage = MessageBuilder.buildChannelChangeMessage(new ArrayList<>(CHANNELS));
-		user.getConnection().send(channelsMessage.toJson());
-		LOGGER.debug("Send channelList to User: {}", user.getName());
+		LOGGER.debug("User {} was not valid and was channel list was not sent.", user.getName());
 	}
 }
