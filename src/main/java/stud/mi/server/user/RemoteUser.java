@@ -10,84 +10,99 @@ import org.statefulj.persistence.annotations.State;
 
 import stud.mi.server.channel.Channel;
 
-public class RemoteUser {
+public class RemoteUser
+{
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(RemoteUser.class);
-	private static final long MAX_ALIVE_SECONDS = 20L;
+    private static final Logger LOGGER = LoggerFactory.getLogger(RemoteUser.class);
+    private static final long MAX_ALIVE_SECONDS = 20L;
 
-	@State
-	private String state;
+    @State
+    private String state;
 
-	private String name;
-	private Long userID;
-	private Channel jointChannel;
-	private WebSocket connection;
-	private ClientConnectionStateMachine stateMachine;
-	private LocalDateTime lastHeartBeat = LocalDateTime.now();
+    private String name;
+    private Long userID;
+    private Channel jointChannel;
+    private WebSocket connection;
+    private ClientConnectionStateMachine stateMachine;
+    private LocalDateTime lastHeartBeat = LocalDateTime.now();
 
-	public RemoteUser(final WebSocket connection, final String name, final Long designatedID) {
-		LOGGER.debug("Create User {} with ID {}", name, designatedID);
-		this.name = name;
-		this.userID = designatedID;
-		this.connection = connection;
-		this.stateMachine = new ClientConnectionStateMachine(this);
-	}
+    public RemoteUser(final WebSocket connection, final String name, final Long designatedID)
+    {
+        RemoteUser.LOGGER.debug("Create User {} with ID {}", name, designatedID);
+        this.name = name;
+        this.userID = designatedID;
+        this.connection = connection;
+        this.stateMachine = new ClientConnectionStateMachine(this);
+    }
 
-	public void heartBeat() {
-		LOGGER.debug("Hearbeat on User {}", getName());
-		lastHeartBeat = LocalDateTime.now();
-	}
+    public void destroy()
+    {
+        RemoteUser.LOGGER.debug("Destroy user {}", this.getName());
+        this.exitChannel();
+    }
 
-	public boolean isDead() {
-		final long seconds = ChronoUnit.SECONDS.between(lastHeartBeat, LocalDateTime.now());
-		return seconds > MAX_ALIVE_SECONDS;
-	}
+    public boolean exitChannel()
+    {
+        if (this.jointChannel != null)
+        {
+            RemoteUser.LOGGER.debug("User {} exits channel {}", this.getName(), this.jointChannel.getName());
+            return this.jointChannel.userExit(this);
+        }
+        return false;
+    }
 
-	public boolean joinChannel(final Channel channel) {
-		LOGGER.debug("User {} joins channel {}", getName(), channel.getName());
-		this.exitChannel();
-		if (channel.userJoin(this)) {
-			this.jointChannel = channel;
-			return true;
-		}
-		return false;
-	}
+    public WebSocket getConnection()
+    {
+        return this.connection;
+    }
 
-	public boolean exitChannel() {
-		if (this.jointChannel != null) {
-			LOGGER.debug("User {} exits channel {}", getName(), jointChannel.getName());
-			return this.jointChannel.userExit(this);
-		}
-		return false;
-	}
+    public Long getID()
+    {
+        return this.userID;
+    }
 
-	public Channel getJointChannel() {
-		return jointChannel;
-	}
+    public Channel getJointChannel()
+    {
+        return this.jointChannel;
+    }
 
-	public ClientConnectionStateMachine getStateMachine() {
-		return this.stateMachine;
-	}
+    public String getName()
+    {
+        return this.name;
+    }
 
-	public WebSocket getConnection() {
-		return this.connection;
-	}
+    public ClientConnectionStateMachine getStateMachine()
+    {
+        return this.stateMachine;
+    }
 
-	public String getName() {
-		return this.name;
-	}
+    public void heartBeat()
+    {
+        RemoteUser.LOGGER.trace("Hearbeat on User {}", this.getName());
+        this.lastHeartBeat = LocalDateTime.now();
+    }
 
-	public Long getID() {
-		return userID;
-	}
+    public boolean isDead()
+    {
+        final long seconds = ChronoUnit.SECONDS.between(this.lastHeartBeat, LocalDateTime.now());
+        return seconds > RemoteUser.MAX_ALIVE_SECONDS;
+    }
 
-	public void destroy() {
-		LOGGER.debug("Destroy user {}", getName());
-		this.exitChannel();
-	}
+    public boolean isValid()
+    {
+        return !this.name.isEmpty() && this.userID > 0;
+    }
 
-	public boolean isValid() {
-		return !this.name.isEmpty() && this.userID > 0;
-	}
+    public boolean joinChannel(final Channel channel)
+    {
+        RemoteUser.LOGGER.debug("User {} joins channel {}", this.getName(), channel.getName());
+        this.exitChannel();
+        if (channel.userJoin(this))
+        {
+            this.jointChannel = channel;
+            return true;
+        }
+        return false;
+    }
 
 }
