@@ -13,7 +13,7 @@ import stud.mi.message.Message;
 import stud.mi.server.user.RemoteUser;
 import stud.mi.util.MessageBuilder;
 
-public class ChannelRegistry
+public final class ChannelRegistry
 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChannelRegistry.class);
@@ -32,7 +32,7 @@ public class ChannelRegistry
         CHANNELS.add(new Channel("Other"));
     }
 
-    public static ChannelRegistry getInstance()
+    public static synchronized ChannelRegistry getInstance()
     {
         if (instance == null)
         {

@@ -15,13 +15,14 @@ import org.slf4j.LoggerFactory;
 
 import stud.mi.message.Message;
 
-public class UserRegistry
+public final class UserRegistry
 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserRegistry.class);
 
     private static final Map<Long, RemoteUser> USERS = new HashMap<>();
-    private static final long HEARTBEAT_RATE = 15 * 1000L;
+    private static final long SECOND = 1000L;
+    private static final long HEARTBEAT_RATE = 15 * SECOND;
 
     private static UserRegistry instance;
 
@@ -47,7 +48,7 @@ public class UserRegistry
                 }
                 deadUserIds.forEach(instance::removeUser);
             }
-        }, 1000L, HEARTBEAT_RATE);
+        }, SECOND, HEARTBEAT_RATE);
     }
 
     public static synchronized UserRegistry getInstance()
@@ -64,11 +65,6 @@ public class UserRegistry
         return USERS;
     }
 
-    public RemoteUser getUser(final Long userID)
-    {
-        return USERS.get(userID);
-    }
-
     public void removeUser(final Long userID)
     {
         LOGGER.debug("Removing User with ID {}", userID);
@@ -78,10 +74,15 @@ public class UserRegistry
 
     public void removeUser(final WebSocket connection)
     {
-        this.removeUser(this.getUser(connection).getID());
+        this.removeUser(getUser(connection).getID());
     }
 
-    private RemoteUser getUser(final WebSocket connection)
+    public RemoteUser getUser(final Long userID)
+    {
+        return USERS.get(userID);
+    }
+
+    private static RemoteUser getUser(final WebSocket connection)
     {
         return USERS.entrySet().stream().filter(entry -> entry.getValue().getConnection().equals(connection)).collect(Collectors.toList()).get(0)
                 .getValue();
@@ -100,7 +101,7 @@ public class UserRegistry
         }
         else
         {
-            newUserID = this.generateUserID();
+            newUserID = generateUserID();
         }
         final RemoteUser user = new RemoteUser(connection, registerMessage.getUserName(), newUserID);
         user.getStateMachine().processEvent(UserEvents.ACK_REGISTER);
@@ -113,7 +114,7 @@ public class UserRegistry
         return null;
     }
 
-    private Long generateUserID()
+    private static Long generateUserID()
     {
         final SecureRandom rnd = new SecureRandom();
         long userID = rnd.nextLong();

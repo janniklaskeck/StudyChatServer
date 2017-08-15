@@ -10,7 +10,7 @@ import org.statefulj.persistence.annotations.State;
 
 import stud.mi.server.channel.Channel;
 
-public class RemoteUser
+public final class RemoteUser
 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RemoteUser.class);

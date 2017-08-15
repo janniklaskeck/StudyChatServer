@@ -3,7 +3,7 @@ package stud.mi.message;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-public class Message
+public final class Message
 {
 
     private static final JsonParser JSON_PARSER = new JsonParser();

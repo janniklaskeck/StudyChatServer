@@ -17,7 +17,7 @@ import stud.mi.server.user.RemoteUser;
 import stud.mi.server.user.UserEvents;
 import stud.mi.server.user.UserRegistry;
 
-public class ChatServer extends WebSocketServer
+public final class ChatServer extends WebSocketServer
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatServer.class);
     public static final int PROTOCOL_VERSION = 1;
@@ -51,7 +51,7 @@ public class ChatServer extends WebSocketServer
     public void onMessage(final WebSocket conn, final String message)
     {
         ChatServer.LOGGER.trace("Message received from {}, content '{}'", conn.getRemoteSocketAddress().getHostName(), message);
-        this.parseMessage(conn, message);
+        parseMessage(conn, message);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class ChatServer extends WebSocketServer
         ChatServer.LOGGER.debug("Connection from {}.", conn.getRemoteSocketAddress().getHostName());
     }
 
-    private void parseMessage(final WebSocket conn, final String message)
+    private static void parseMessage(final WebSocket conn, final String message)
     {
         final UserRegistry userRegistry = UserRegistry.getInstance();
         final ChannelRegistry channelRegistry = ChannelRegistry.getInstance();

@@ -2,6 +2,7 @@ package stud.mi.server.channel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -24,7 +25,7 @@ import stud.mi.message.MessageType;
 import stud.mi.server.user.RemoteUser;
 import stud.mi.util.MessageBuilder;
 
-public class Channel
+public final class Channel
 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Channel.class);
@@ -42,6 +43,7 @@ public class Channel
 
     public Channel(final String name, final int maxUsers)
     {
+
         this.name = name;
         if (maxUsers > MAX_USERS)
         {
@@ -70,7 +72,7 @@ public class Channel
 
     public Channel(final String name)
     {
-        this(name, 64);
+        this(name, DEFAULT_MAX_USERS);
     }
 
     public void sendMessageToChannel(final RemoteUser sender, final String type)
@@ -151,7 +153,7 @@ public class Channel
         if (client.isStarted())
         {
             String response = "";
-            final Request newRequest = client.newRequest(String.format(this.getBackendUrlTemplate(), this.getName().toLowerCase()));
+            final Request newRequest = client.newRequest(String.format(this.getBackendUrlTemplate(), this.getName().toLowerCase(Locale.ENGLISH)));
             try
             {
                 response = newRequest.send().getContentAsString();
@@ -179,7 +181,7 @@ public class Channel
     {
         if (client.isStarted())
         {
-            final Request newRequest = client.POST(String.format(this.getBackendUrlTemplate(), this.getName().toLowerCase()));
+            final Request newRequest = client.POST(String.format(this.getBackendUrlTemplate(), this.getName().toLowerCase(Locale.ENGLISH)));
             newRequest.content(new StringContentProvider(message.toJson()), "application/json");
             try
             {

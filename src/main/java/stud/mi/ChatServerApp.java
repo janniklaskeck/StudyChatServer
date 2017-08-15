@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import stud.mi.server.ChatServer;
 
-public class ChatServerApp
+public final class ChatServerApp
 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatServerApp.class);

@@ -15,7 +15,7 @@ import stud.mi.server.channel.Channel;
 import stud.mi.util.ChatAction;
 import stud.mi.util.MessageBuilder;
 
-public class ClientConnectionStateMachine extends FSM<RemoteUser>
+public final class ClientConnectionStateMachine extends FSM<RemoteUser>
 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientConnectionStateMachine.class);

@@ -11,7 +11,7 @@ import stud.mi.server.ChatServer;
 import stud.mi.server.channel.Channel;
 import stud.mi.server.user.RemoteUser;
 
-public class MessageBuilder
+public final class MessageBuilder
 {
     private static final String CHANNEL_NAME = "channelName";
     private static final String USER_ID = "userID";

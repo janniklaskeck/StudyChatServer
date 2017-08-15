@@ -1,6 +1,6 @@
 package stud.mi.message;
 
-public class MessageType
+public final class MessageType
 {
 
     public static final String USER_JOIN = "USER_JOIN";
