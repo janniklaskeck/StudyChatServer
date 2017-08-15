@@ -1,10 +1,10 @@
 package stud.mi.server.user;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.stream.Collectors;
@@ -37,7 +37,7 @@ public class UserRegistry
             {
                 LOGGER.trace("Running Heartbeat.");
                 final List<Long> deadUserIds = new ArrayList<>();
-                for (Map.Entry<Long, RemoteUser> user : USERS.entrySet())
+                for (final Map.Entry<Long, RemoteUser> user : USERS.entrySet())
                 {
                     if (user.getValue().isDead())
                     {
@@ -115,7 +115,7 @@ public class UserRegistry
 
     private Long generateUserID()
     {
-        final Random rnd = new Random();
+        final SecureRandom rnd = new SecureRandom();
         long userID = rnd.nextLong();
         while (USERS.containsKey(userID) || userID <= 0L)
         {
