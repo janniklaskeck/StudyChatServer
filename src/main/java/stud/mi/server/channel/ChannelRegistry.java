@@ -81,6 +81,9 @@ public class ChannelRegistry
             LOGGER.debug("Send channelList to User: {}", user.getName());
             return;
         }
-        LOGGER.debug("User {} was not valid and was channel list was not sent.", user.getName());
+        else if (user != null)
+        {
+            LOGGER.debug("User {} was not valid and was channel list was not sent.", user.getName());
+        }
     }
 }

@@ -76,16 +76,16 @@ public class Channel
     public void sendMessageToChannel(final RemoteUser sender, final String type)
     {
         LOGGER.debug("Sending message to channel {} with type {}", this.getName(), type);
-        final JsonObject jo = MessageBuilder.buildMessageBaseJson(type);
-        final Message customMessage = new Message(jo);
+        final Message customMessage = MessageBuilder.buildMessageBase(type);
         this.sendMessageToChannel(sender, customMessage);
     }
 
     public void sendMessageToChannel(final RemoteUser sender, final Message message)
     {
-        LOGGER.debug("Sending message to channel {} with type {}", this.getName(), message.getType());
+        final String messageType = message.getType();
+        LOGGER.debug("Sending message to channel {} with type {}", this.getName(), messageType);
         Message msg = null;
-        switch (message.getType())
+        switch (messageType)
         {
         case MessageType.CHANNEL_USER_CHANGE:
             msg = MessageBuilder.buildUserChangeMessage(this.userList, this);
@@ -129,17 +129,19 @@ public class Channel
 
     private void sendHistoryToUser(final RemoteUser user)
     {
-        LOGGER.info("Retreive and send Channel {} Chat History to user {}", this.getName(), user.getName());
+        final String userName = user.getName();
+        LOGGER.info("Retreive and send Channel {} Chat History to user {}", this.getName(), userName);
         final JsonArray chatHistory = new JsonArray();
         final List<Message> currentChannelChatHistory = this.getCurrentChannelChatHistory();
+        final JsonParser parser = new JsonParser();
         for (final Message msg : currentChannelChatHistory)
         {
-            final JsonElement jo = new JsonParser().parse(msg.toJson());
+            final JsonElement jo = parser.parse(msg.toJson());
             chatHistory.add(jo);
         }
         final Message msg = MessageBuilder.buildChannelHistoryMessage(chatHistory, this);
         user.getConnection().send(msg.toJson());
-        LOGGER.debug("Send Message '{}' to User '{}'", msg.toJson(), user.getName());
+        LOGGER.debug("Send Message '{}' to User '{}'", msg.toJson(), userName);
     }
 
     private List<Message> getCurrentChannelChatHistory()
@@ -155,9 +157,10 @@ public class Channel
                 response = newRequest.send().getContentAsString();
                 LOGGER.debug("{}", response);
                 final JsonObject messageListObject = new JsonParser().parse(response).getAsJsonObject();
-                if (messageListObject.get("messages") != null)
+                final JsonElement messagesElement = messageListObject.get("messages");
+                if (messagesElement != null)
                 {
-                    final JsonArray messagesArray = messageListObject.get("messages").getAsJsonArray();
+                    final JsonArray messagesArray = messagesElement.getAsJsonArray();
                     for (final JsonElement element : messagesArray)
                     {
                         messageHistory.add(new Message(element.getAsJsonObject()));
@@ -168,7 +171,6 @@ public class Channel
             {
                 LOGGER.error("HTTP Get not executed successfully!", e);
             }
-
         }
         return messageHistory;
     }

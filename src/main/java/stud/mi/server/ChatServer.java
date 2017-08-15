@@ -62,23 +62,25 @@ public class ChatServer extends WebSocketServer
 
     private void parseMessage(final WebSocket conn, final String message)
     {
+        final UserRegistry userRegistry = UserRegistry.getInstance();
+        final ChannelRegistry channelRegistry = ChannelRegistry.getInstance();
         final Message msg = new Message(message);
         switch (msg.getType())
         {
         case MessageType.USER_JOIN:
-            final RemoteUser remoteUser = UserRegistry.getInstance().registerUser(conn, msg);
-            ChannelRegistry.getInstance().sendChannelsToUser(remoteUser);
+            final RemoteUser remoteUser = userRegistry.registerUser(conn, msg);
+            channelRegistry.sendChannelsToUser(remoteUser);
             break;
         case MessageType.CHANNEL_JOIN:
-            final Channel channel = ChannelRegistry.getInstance().getChannel(msg.getChannelName());
-            UserRegistry.getInstance().getUser(msg.getUserID()).getStateMachine().processEvent(UserEvents.JOIN_CHANNEL, channel);
+            final Channel channel = channelRegistry.getChannel(msg.getChannelName());
+            userRegistry.getUser(msg.getUserID()).getStateMachine().processEvent(UserEvents.JOIN_CHANNEL, channel);
             break;
         case MessageType.CHANNEL_MESSAGE:
-            final RemoteUser user = UserRegistry.getInstance().getUser(msg.getUserID());
+            final RemoteUser user = userRegistry.getUser(msg.getUserID());
             user.getJointChannel().sendMessageToChannel(user, msg);
             break;
         case MessageType.USER_HEARTBEAT:
-            UserRegistry.getInstance().getUser(msg.getUserID()).heartBeat();
+            userRegistry.getUser(msg.getUserID()).heartBeat();
             break;
         default:
             ChatServer.LOGGER.debug("Message Type unknown: {}", msg.getType());

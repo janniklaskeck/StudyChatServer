@@ -1,15 +1,9 @@
-buildscript {
-    repositories {
-		jcenter()
-    }
-    dependencies {
-        classpath("com.github.jengelman.gradle.plugins:shadow:2.0.0")
-    }
+plugins {
+  id "org.sonarqube" version "2.5"
+  id "java"
+  id "eclipse"
+  id 'com.github.johnrengelman.shadow' version "2.0.0"
 }
-
-apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'java'
-apply plugin: 'eclipse'
 
 jar {
     baseName = 'StudyChatServer'
@@ -44,4 +38,5 @@ dependencies {
     compile "org.java-websocket:Java-WebSocket:$webSocketVersion"
     compile "org.statefulj:statefulj-fsm:$statefuljVersion"
     compile "org.eclipse.jetty:jetty-client:$httpClientVersion"
+    testCompile "junit:junit:4.12"
 }
