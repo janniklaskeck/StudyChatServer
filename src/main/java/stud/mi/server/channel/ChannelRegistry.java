@@ -77,7 +77,7 @@ public final class ChannelRegistry
         if (user != null && user.isValid())
         {
             final Message channelsMessage = MessageBuilder.buildChannelChangeMessage(new ArrayList<>(CHANNELS));
-            user.getConnection().send(channelsMessage.toJson());
+            user.sendMessageToUser(channelsMessage.toJson());
             LOGGER.debug("Send channelList to User: {}", user.getName());
             return;
         }

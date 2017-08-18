@@ -42,7 +42,7 @@ public final class ClientConnectionStateMachine extends FSM<RemoteUser>
         {
             final String message = MessageBuilder.buildSendUserID(user.getID()).toJson();
             LOGGER.debug("Send Message: {}", message);
-            user.getConnection().send(message);
+            user.sendMessageToUser(message);
         });
 
         final ChatAction onJoinChannel = new ChatAction(this.remoteUser, (user, state, event, args) ->
@@ -51,7 +51,7 @@ public final class ClientConnectionStateMachine extends FSM<RemoteUser>
             user.joinChannel(channelToJoin);
             final String message = MessageBuilder.buildAckUserJoinChannel(user.getID(), channelToJoin).toJson();
             LOGGER.debug("Send Message: {}", message);
-            user.getConnection().send(message);
+            user.sendMessageToUser(message);
         });
         final ChatAction onDisconnectServer = new ChatAction(this.remoteUser, (user, state, event, args) ->
         {

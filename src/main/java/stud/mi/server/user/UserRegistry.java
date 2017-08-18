@@ -90,31 +90,36 @@ public final class UserRegistry
 
     public RemoteUser registerUser(final WebSocket connection, final Message registerMessage)
     {
-        LOGGER.debug("Regiser User {}", registerMessage.getUserName());
-        final boolean userAlreadyExists = !USERS.entrySet().stream()
-                .filter(entry -> entry.getValue().getName().equalsIgnoreCase(registerMessage.getUserName())).collect(Collectors.toList()).isEmpty();
-        final Long newUserID;
-        if (userAlreadyExists)
+        final String userName = registerMessage.getUserName();
+        LOGGER.debug("Regiser User {}", userName);
+
+        if (userNameAlreadyRegistered(userName))
         {
-            newUserID = -1L;
             LOGGER.debug("User {} already registered.", registerMessage.getUserName());
+            return null;
         }
-        else
-        {
-            newUserID = generateUserID();
-        }
-        final RemoteUser user = new RemoteUser(connection, registerMessage.getUserName(), newUserID);
-        user.getStateMachine().processEvent(UserEvents.ACK_REGISTER);
-        if (user.getID() > 0)
-        {
-            USERS.put(user.getID(), user);
-            LOGGER.debug("Registered new User with Name {} and ID {}", user.getName(), user.getID());
-            return user;
-        }
-        return null;
+        final RemoteUser newUser = createUser(connection, userName);
+        USERS.put(newUser.getID(), newUser);
+        LOGGER.debug("Registered new User with Name {} and ID {}", newUser.getName(), newUser.getID());
+        return newUser;
     }
 
-    private static Long generateUserID()
+    private static RemoteUser createUser(final WebSocket connection, final String userName)
+    {
+        final Long newUserID = generateUserID();
+        final RemoteUser user = new RemoteUser(connection, userName, newUserID);
+        user.getStateMachine().processEvent(UserEvents.ACK_REGISTER);
+        return user;
+    }
+
+    private static boolean userNameAlreadyRegistered(final String userName)
+    {
+        LOGGER.debug("Check if Username '{}' is already registered.", userName);
+        return !USERS.entrySet().stream().filter(entry -> entry.getValue().getName().equalsIgnoreCase(userName)).collect(Collectors.toList())
+                .isEmpty();
+    }
+
+    static Long generateUserID()
     {
         final SecureRandom rnd = new SecureRandom();
         long userID = rnd.nextLong();

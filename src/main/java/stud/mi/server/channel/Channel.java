@@ -103,7 +103,7 @@ public final class Channel
         }
         for (final RemoteUser user : this.userList)
         {
-            user.getConnection().send(msg.toJson());
+            user.sendMessageToUser(msg.toJson());
         }
         LOGGER.debug("Message sent to channel {} with {} users, Content: {}", this.name, this.userList.size(), message.toJson());
     }
@@ -111,7 +111,7 @@ public final class Channel
     public boolean userJoin(final RemoteUser user)
     {
         LOGGER.debug("User {} wants to join Channel {}", user.getName(), this.getName());
-        if (this.userList.size() < this.maxUsers)
+        if (this.userList.size() < this.maxUsers && !this.userList.contains(user))
         {
             this.userList.add(user);
             this.sendMessageToChannel(user, MessageType.CHANNEL_USER_CHANGE);
@@ -142,7 +142,7 @@ public final class Channel
             chatHistory.add(jo);
         }
         final Message msg = MessageBuilder.buildChannelHistoryMessage(chatHistory, this);
-        user.getConnection().send(msg.toJson());
+        user.sendMessageToUser(msg.toJson());
         LOGGER.debug("Send Message '{}' to User '{}'", msg.toJson(), userName);
     }
 

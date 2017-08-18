@@ -14,7 +14,7 @@ public final class RemoteUser
 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RemoteUser.class);
-    private static final long MAX_ALIVE_SECONDS = 20L;
+    static final long MAX_ALIVE_SECONDS = 20L;
 
     @State
     private String state;
@@ -24,20 +24,50 @@ public final class RemoteUser
     private Channel jointChannel;
     private WebSocket connection;
     private ClientConnectionStateMachine stateMachine;
-    private LocalDateTime lastHeartBeat = LocalDateTime.now();
+    LocalDateTime lastHeartBeat = LocalDateTime.now();
 
     public RemoteUser(final WebSocket connection, final String name, final Long designatedID)
     {
-        RemoteUser.LOGGER.debug("Create User {} with ID {}", name, designatedID);
+        LOGGER.debug("Create User {} with ID {}", name, designatedID);
         this.name = name;
         this.userID = designatedID;
         this.connection = connection;
         this.stateMachine = new ClientConnectionStateMachine(this);
     }
 
+    public void heartBeat()
+    {
+        LOGGER.trace("Hearbeat on User {}", this.getName());
+        this.lastHeartBeat = LocalDateTime.now();
+    }
+
+    public boolean isDead()
+    {
+        final long seconds = ChronoUnit.SECONDS.between(this.lastHeartBeat, LocalDateTime.now());
+        LOGGER.debug("Seconds between heartbeats: {}", seconds);
+        return seconds > RemoteUser.MAX_ALIVE_SECONDS;
+    }
+
+    public boolean isValid()
+    {
+        return !this.name.isEmpty() && this.userID > 0;
+    }
+
+    public boolean joinChannel(final Channel channel)
+    {
+        LOGGER.debug("User {} joins channel {}", this.getName(), channel.getName());
+        this.exitChannel();
+        if (channel.userJoin(this))
+        {
+            this.jointChannel = channel;
+            return true;
+        }
+        return false;
+    }
+
     public void destroy()
     {
-        RemoteUser.LOGGER.debug("Destroy user {}", this.getName());
+        LOGGER.debug("Destroy user {}", this.getName());
         this.exitChannel();
     }
 
@@ -45,9 +75,25 @@ public final class RemoteUser
     {
         if (this.jointChannel != null)
         {
-            RemoteUser.LOGGER.debug("User {} exits channel {}", this.getName(), this.jointChannel.getName());
-            return this.jointChannel.userExit(this);
+            LOGGER.debug("User {} exits channel {}", this.getName(), this.jointChannel.getName());
+            if (this.jointChannel.userExit(this))
+            {
+                this.jointChannel = null;
+                return true;
+            }
         }
+        return false;
+    }
+
+    public boolean sendMessageToUser(final String msg)
+    {
+        LOGGER.trace("Trying to send Message '{}' to User '{}'.", msg, this.getName());
+        if (this.connection != null)
+        {
+            this.connection.send(msg);
+            return true;
+        }
+        LOGGER.error("Connection not existing, Message not send!");
         return false;
     }
 
@@ -74,35 +120,6 @@ public final class RemoteUser
     public ClientConnectionStateMachine getStateMachine()
     {
         return this.stateMachine;
-    }
-
-    public void heartBeat()
-    {
-        RemoteUser.LOGGER.trace("Hearbeat on User {}", this.getName());
-        this.lastHeartBeat = LocalDateTime.now();
-    }
-
-    public boolean isDead()
-    {
-        final long seconds = ChronoUnit.SECONDS.between(this.lastHeartBeat, LocalDateTime.now());
-        return seconds > RemoteUser.MAX_ALIVE_SECONDS;
-    }
-
-    public boolean isValid()
-    {
-        return !this.name.isEmpty() && this.userID > 0;
-    }
-
-    public boolean joinChannel(final Channel channel)
-    {
-        RemoteUser.LOGGER.debug("User {} joins channel {}", this.getName(), channel.getName());
-        this.exitChannel();
-        if (channel.userJoin(this))
-        {
-            this.jointChannel = channel;
-            return true;
-        }
-        return false;
     }
 
 }
