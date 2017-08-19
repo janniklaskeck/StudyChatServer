@@ -19,6 +19,8 @@ repositories {
     mavenCentral()
 }
 
+wrapper.gradleVersion = '4.1'
+
 ext {
     slf4jVersion = "1.7.21"
     log4jVersion = "2.7"
